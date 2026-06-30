@@ -108,22 +108,13 @@ const FaceAR = (() => {
       _pendingEffect = null;
     }
 
-    (function animate() {
-      requestAnimationFrame(animate);
-      JeelizThreeHelper.render(_threeScene, _threeCamera);
-    })();
-
+    // No separate rAF loop — render is called from _onTrack (Jeeliz's own loop)
     _initialized = true;
     _setStatus('green', 'Face AR ready');
   }
 
   // ── Per-frame tracking callback ──
-  let _trackLogCount = 0;
   function _onTrack(detectState) {
-    if (_trackLogCount < 5) {
-      console.log('[FaceAR] _onTrack detectState:', JSON.stringify(detectState));
-      _trackLogCount++;
-    }
     const detected = detectState.detected > 0.5;
 
     if (detected !== _faceDetected) {
@@ -148,6 +139,11 @@ const FaceAR = (() => {
           detectState.headZ || 0
         );
       }
+    }
+
+    // Render Three.js scene in sync with Jeeliz's own loop
+    if (_initialized && _threeScene && _threeCamera) {
+      JeelizThreeHelper.render(_threeScene, _threeCamera);
     }
   }
 
