@@ -16,7 +16,6 @@ const FaceAR = (() => {
   let _currentEffect = 'hat';
   let _threeScene    = null;
   let _threeCamera   = null;
-  let _renderer      = null;
   let _currentMesh   = null;
   let _faceDetected  = false;
   let _pendingEffect = null;
@@ -88,22 +87,17 @@ const FaceAR = (() => {
       return;
     }
 
-    const threeCanvas = document.getElementById('threeCanvas');
-    _renderer = new THREE.WebGLRenderer({ canvas: threeCanvas, alpha: true });
-    _renderer.setPixelRatio(window.devicePixelRatio);
-    _renderer.setSize(threeCanvas.clientWidth, threeCanvas.clientHeight);
-
     _threeScene  = new THREE.Scene();
-    _threeCamera = new THREE.PerspectiveCamera(40, threeCanvas.clientWidth / threeCanvas.clientHeight, 0.01, 100);
+    _threeCamera = new THREE.PerspectiveCamera(40, 1, 0.01, 100);
 
     const ambient  = new THREE.AmbientLight(0xffffff, 0.8);
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
     dirLight.position.set(0, 1, 2);
     _threeScene.add(ambient, dirLight);
 
+    // JeelizThreeHelper manages its own renderer — do NOT create a second one
     JeelizThreeHelper.init(spec, () => {});
 
-    // Load effect now if cached, otherwise preload will call _loadEffect when done
     _loadEffect(_currentEffect);
 
     if (_pendingEffect) {
@@ -114,7 +108,6 @@ const FaceAR = (() => {
     (function animate() {
       requestAnimationFrame(animate);
       JeelizThreeHelper.render(_threeScene, _threeCamera);
-      _renderer.render(_threeScene, _threeCamera);
     })();
 
     _initialized = true;
@@ -178,7 +171,6 @@ const FaceAR = (() => {
     _currentMesh  = null;
     _threeScene   = null;
     _threeCamera  = null;
-    _renderer     = null;
   }
 
   // ── Status ──
