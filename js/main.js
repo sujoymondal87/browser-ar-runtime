@@ -36,16 +36,10 @@ const App = (() => {
     return path === '/face' || path.endsWith('/face') ? MODE_FACE : MODE_IMAGE;
   }
 
-  // ── Tab switching ──
+  // ── Tab switching — always full reload for clean WebGL/camera state ──
   function switchTab(mode) {
     if (mode === _currentMode) return;
-    if (mode === MODE_FACE) {
-      ImageAR.destroy();
-      window.location.href = '/face';
-    } else {
-      FaceAR.destroy();
-      window.location.href = '/';
-    }
+    window.location.href = mode === MODE_FACE ? '/face' : '/';
   }
 
   function onEffectChange(value) {

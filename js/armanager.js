@@ -213,14 +213,11 @@ const ImageAR = (() => {
     modelAsset.setAttribute('src', 'models/busto-antoni-gaudi/source/busto_antoni_gaud%C3%AD.glb');
     assets.appendChild(modelAsset);
 
-    const audioAsset = document.createElement('audio');
-    audioAsset.setAttribute('id', 'gaudi-audio');
-    audioAsset.setAttribute('src', 'audio/antonio.mp3');
-    audioAsset.setAttribute('preload', 'auto');
-    _audioEl = audioAsset;
-    assets.appendChild(audioAsset);
-
     scene.appendChild(assets);
+
+    // Plain Audio — outside A-Frame to avoid autoplay restrictions
+    _audioEl = new Audio('audio/antonio.mp3');
+    _audioEl.preload = 'auto';
 
     // One image-target entity covers all 5 indices (all show same model)
     // We add 5 target entities, one per compiled index

@@ -28,11 +28,14 @@ const FaceAR = (() => {
     if (effectKey) _currentEffect = effectKey;
     _setStatus('amber', 'Requesting camera…');
 
+    // Hide hint until Jeeliz is ready
+    const hint = document.getElementById('face-hint');
+    if (hint) hint.classList.add('hidden');
+
     _preloadModels(() => {
       JeelizResizer.size_canvas({
         canvasId:     'jeeFaceFilterCanvas',
         isFullScreen: false,
-        isKeepAspectRatio: false,
         callback: (isError, videoSettings) => {
           if (isError) { _setStatus('red', 'Camera error'); return; }
 
