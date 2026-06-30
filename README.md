@@ -12,12 +12,6 @@ Cultural institution apps need AR that works without an app store. A visitor poi
 
 ---
 
-## Demo Video
-
-*Coming soon*
-
----
-
 ## Architecture
 
 ![Architecture](docs/architecture.png)
