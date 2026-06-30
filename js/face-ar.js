@@ -88,17 +88,17 @@ const FaceAR = (() => {
       return;
     }
 
-    _threeScene  = new THREE.Scene();
-    _threeCamera = new THREE.PerspectiveCamera(40, 1, 0.01, 100);
+    console.log('[FaceAR] calling JeelizThreeHelper.init');
+    const threeStuffs = JeelizThreeHelper.init(spec, null);
+    console.log('[FaceAR] JeelizThreeHelper.init returned:', threeStuffs);
+
+    _threeScene  = threeStuffs.scene;
+    _threeCamera = new THREE.PerspectiveCamera(40, spec.canvasElement.width / spec.canvasElement.height, 0.01, 100);
 
     const ambient  = new THREE.AmbientLight(0xffffff, 0.8);
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
     dirLight.position.set(0, 1, 2);
     _threeScene.add(ambient, dirLight);
-
-    // JeelizThreeHelper manages its own renderer — do NOT create a second one
-    console.log('[FaceAR] calling JeelizThreeHelper.init');
-    JeelizThreeHelper.init(spec, () => {});
 
     console.log('[FaceAR] calling _loadEffect, cache keys:', Object.keys(_modelCache));
     _loadEffect(_currentEffect);
@@ -154,8 +154,8 @@ const FaceAR = (() => {
     }
 
     // Render Three.js scene in sync with Jeeliz's own loop
-    if (_initialized && _threeScene && _threeCamera) {
-      JeelizThreeHelper.render(_threeScene, _threeCamera);
+    if (_initialized && _threeCamera) {
+      JeelizThreeHelper.render(detectState, _threeCamera);
     }
   }
 
