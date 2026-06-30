@@ -30,11 +30,42 @@ const ImageAR = (() => {
   let _timerSeconds  = SLIDE_DURATION;
 
   // ── Public: init ──
+  function _isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      || navigator.maxTouchPoints > 1;
+  }
+
   function init() {
     if (_isRunning) return;
-    _setStatus('amber', 'Loading image tracking…');
     _buildSlider();
+
+    if (!_isMobile()) {
+      _setStatus('', 'Open on a mobile device to use AR');
+      _showDesktopNotice();
+      return;
+    }
+
+    _setStatus('amber', 'Loading image tracking…');
     _loadMindARScripts().then(() => _buildScene());
+  }
+
+  function _showDesktopNotice() {
+    const container = document.getElementById('mindar-container');
+    if (!container) return;
+    const notice = document.createElement('div');
+    notice.style.cssText = [
+      'position:absolute;inset:0;display:flex;flex-direction:column',
+      'align-items:center;justify-content:center;z-index:5',
+      'gap:12px;pointer-events:none',
+    ].join(';');
+    notice.innerHTML = `
+      <div style="background:rgba(10,10,20,0.8);border:1px solid #2a2d3e;border-radius:12px;
+                  padding:24px 32px;text-align:center;backdrop-filter:blur(6px)">
+        <div style="font-size:32px;margin-bottom:8px">📱</div>
+        <div style="font-size:15px;font-weight:600;color:#e8e8f0;margin-bottom:6px">Mobile only</div>
+        <div style="font-size:13px;color:#7a7a9a">Open this page on your phone to use AR image tracking</div>
+      </div>`;
+    container.appendChild(notice);
   }
 
   // ── Slider ──
@@ -200,8 +231,8 @@ const ImageAR = (() => {
 
       const modelEl = document.createElement('a-gltf-model');
       modelEl.setAttribute('src', '#gaudi-model');
-      modelEl.setAttribute('position', '0 0 0.1');
-      modelEl.setAttribute('scale', '0.15 0.15 0.15');
+      modelEl.setAttribute('position', '0 0.6 0');
+      modelEl.setAttribute('scale', '0.8 0.8 0.8');
       modelEl.setAttribute('rotation', '0 0 0');
       targetEl.appendChild(modelEl);
 
