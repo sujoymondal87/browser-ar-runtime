@@ -182,3 +182,9 @@ The AR system this repo is distilled from is deployed inside a no-code app platf
 - The two non-targets in this demo fail silently — the user sees no overlay. What feedback mechanism would you add to make the "not registered" state explicit in a real museum deployment?
 - The page-reload tab switch is a pragmatic solution to a real browser bug. At what point would you invest in a proper in-page teardown and what would that look like?
 - Face AR and Image AR share a loading screen but nothing else. What would a unified AR session manager look like if both modes needed to run simultaneously?
+  
+---
+
+## License
+
+MIT
