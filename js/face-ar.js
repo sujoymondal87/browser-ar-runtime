@@ -81,6 +81,7 @@ const FaceAR = (() => {
 
   // ── Jeeliz ready callback ──
   function _onReady(errCode, spec) {
+    console.log('[FaceAR] _onReady called, errCode:', errCode, 'spec:', spec);
     if (errCode) {
       console.error('[FaceAR] Jeeliz error:', errCode);
       _setStatus('red', 'Jeeliz error: ' + errCode);
@@ -96,8 +97,10 @@ const FaceAR = (() => {
     _threeScene.add(ambient, dirLight);
 
     // JeelizThreeHelper manages its own renderer — do NOT create a second one
+    console.log('[FaceAR] calling JeelizThreeHelper.init');
     JeelizThreeHelper.init(spec, () => {});
 
+    console.log('[FaceAR] calling _loadEffect, cache keys:', Object.keys(_modelCache));
     _loadEffect(_currentEffect);
 
     if (_pendingEffect) {
@@ -115,7 +118,12 @@ const FaceAR = (() => {
   }
 
   // ── Per-frame tracking callback ──
+  let _trackLogCount = 0;
   function _onTrack(detectState) {
+    if (_trackLogCount < 5) {
+      console.log('[FaceAR] _onTrack detectState:', JSON.stringify(detectState));
+      _trackLogCount++;
+    }
     const detected = detectState.detected > 0.5;
 
     if (detected !== _faceDetected) {
@@ -149,6 +157,7 @@ const FaceAR = (() => {
   function _loadEffect(key) {
     if (_currentMesh) { _threeScene.remove(_currentMesh); _currentMesh = null; }
     const model = _modelCache[key];
+    console.log('[FaceAR] _loadEffect key:', key, 'model found:', !!model);
     if (!model) { console.warn('[FaceAR] Not cached:', key); return; }
     _currentMesh = model.clone();
     _currentMesh.visible = false;
