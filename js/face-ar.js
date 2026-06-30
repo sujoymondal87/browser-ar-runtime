@@ -114,8 +114,16 @@ const FaceAR = (() => {
   }
 
   // ── Per-frame tracking callback ──
+  let _dbgCount = 0;
   function _onTrack(detectState) {
     const detected = detectState.detected > 0.5;
+
+    // Log every state change + first 3 detected frames
+    if (detected !== _faceDetected || (_dbgCount < 3 && detected)) {
+      console.log('[FaceAR] detected:', detected, 'detectState:', JSON.stringify(detectState));
+      console.log('[FaceAR] _currentMesh:', !!_currentMesh, '_threeScene children:', _threeScene ? _threeScene.children.length : 'null');
+      if (detected) _dbgCount++;
+    }
 
     if (detected !== _faceDetected) {
       _faceDetected = detected;
@@ -126,7 +134,8 @@ const FaceAR = (() => {
     if (_currentMesh) {
       _currentMesh.visible = detected;
       if (detected) {
-        const s = detectState.s;  // Jeeliz uses .s not .scale
+        const s = detectState.s;
+        console.log('[FaceAR] positioning mesh s:', s, 'pos:', detectState.rx, detectState.ry, 'mesh.visible:', _currentMesh.visible);
         _currentMesh.position.set(
           detectState.rx * 0.5,
           detectState.ry * 0.3 + s * _getYOffset(_currentEffect),
@@ -139,6 +148,8 @@ const FaceAR = (() => {
           detectState.rz || 0
         );
       }
+    } else {
+      if (detected) console.warn('[FaceAR] face detected but _currentMesh is null');
     }
 
     // Render Three.js scene in sync with Jeeliz's own loop
