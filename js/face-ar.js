@@ -159,7 +159,7 @@ const FaceAR = (() => {
     }
   }
 
-  function _getYOffset(effect) { return effect === 'hat' ? 1.3  : 0.7;  }
+  function _getYOffset(effect) { return effect === 'hat' ? 1.1  : 0.4;  }
   function _getScale(effect)   { return effect === 'hat' ? 1.0  : 6.0;  }
 
   function _loadEffect(key) {
