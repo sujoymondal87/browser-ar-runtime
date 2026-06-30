@@ -135,11 +135,11 @@ const FaceAR = (() => {
       _currentMesh.visible = detected;
       if (detected) {
         const s = detectState.s;
-        console.log('[FaceAR] positioning mesh s:', s, 'pos:', detectState.rx, detectState.ry, 'mesh.visible:', _currentMesh.visible);
+        console.log('[FaceAR] positioning mesh s:', s, 'pos:', detectState.x, detectState.y, 'z:-1 mesh.visible:', _currentMesh.visible);
         _currentMesh.position.set(
-          detectState.rx * 0.5,
-          detectState.ry * 0.3 + s * _getYOffset(_currentEffect),
-          0
+          detectState.x,
+          detectState.y + s * _getYOffset(_currentEffect),
+          -1
         );
         _currentMesh.scale.setScalar(s * _getScale(_currentEffect));
         _currentMesh.rotation.set(
