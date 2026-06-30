@@ -116,6 +116,7 @@ const FaceAR = (() => {
   // ── Per-frame tracking callback ──
   let _dbgCount = 0;
   function _onTrack(detectState) {
+    console.log('[FaceAR] _onTrack fired, detected:', detectState.detected);
     const detected = detectState.detected > 0.5;
 
     // Log every state change + first 3 detected frames
