@@ -126,17 +126,17 @@ const FaceAR = (() => {
     if (_currentMesh) {
       _currentMesh.visible = detected;
       if (detected) {
-        const s = detectState.scale;
+        const s = detectState.s;  // Jeeliz uses .s not .scale
         _currentMesh.position.set(
           detectState.rx * 0.5,
           detectState.ry * 0.3 + s * _getYOffset(_currentEffect),
-          -detectState.rz || 0
+          0
         );
         _currentMesh.scale.setScalar(s * _getScale(_currentEffect));
         _currentMesh.rotation.set(
-          detectState.headX || 0,
-          detectState.headY || 0,
-          detectState.headZ || 0
+          detectState.rx || 0,
+          detectState.ry || 0,
+          detectState.rz || 0
         );
       }
     }
