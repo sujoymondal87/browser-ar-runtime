@@ -54,9 +54,8 @@ const ImageAR = (() => {
     if (!container) return;
     const notice = document.createElement('div');
     notice.style.cssText = [
-      'position:absolute;inset:0;display:flex;flex-direction:column',
-      'align-items:center;justify-content:center;z-index:5',
-      'gap:12px;pointer-events:none',
+      'position:absolute;bottom:16px;left:0;right:0;display:flex',
+      'justify-content:center;z-index:5;pointer-events:none',
     ].join(';');
     notice.innerHTML = `
       <div style="background:rgba(10,10,20,0.8);border:1px solid #2a2d3e;border-radius:12px;
@@ -232,7 +231,7 @@ const ImageAR = (() => {
       const modelEl = document.createElement('a-gltf-model');
       modelEl.setAttribute('src', '#gaudi-model');
       modelEl.setAttribute('position', '0 0.6 0');
-      modelEl.setAttribute('scale', '0.8 0.8 0.8');
+      modelEl.setAttribute('scale', '1.2 1.2 1.2');
       modelEl.setAttribute('rotation', '0 0 0');
       targetEl.appendChild(modelEl);
 
