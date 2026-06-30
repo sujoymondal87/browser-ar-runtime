@@ -138,7 +138,7 @@ const FaceAR = (() => {
         const s = detectState.s;
         console.log('[FaceAR] positioning mesh s:', s, 'pos:', detectState.x, detectState.y, 'z:-1 mesh.visible:', _currentMesh.visible);
         _currentMesh.position.set(
-          detectState.x,
+          detectState.x + _getXOffset(_currentEffect),
           detectState.y + s * _getYOffset(_currentEffect),
           -1
         );
@@ -159,8 +159,9 @@ const FaceAR = (() => {
     }
   }
 
-  function _getYOffset(effect) { return effect === 'hat' ? 1.55 : 0.73; }
-  function _getScale(effect)   { return effect === 'hat' ? 1.0  : 6.0;  }
+  function _getXOffset(effect) { return effect === 'hat' ? 0    : -0.05; }
+  function _getYOffset(effect) { return effect === 'hat' ? 1.55 : 0.73;  }
+  function _getScale(effect)   { return effect === 'hat' ? 1.0  : 6.0;   }
 
   function _loadEffect(key) {
     if (_currentMesh) { _threeScene.remove(_currentMesh); _currentMesh = null; }
