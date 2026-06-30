@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browser AR Runtime</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- LOADING SCREEN -->
+  <div id="loading-screen">
+    <div class="loader-inner">
+      <div class="loader-ring"></div>
+      <p id="loading-text">Initialising AR runtime…</p>
+    </div>
+  </div>
+
+  <!-- APP SHELL -->
+  <div id="app" class="hidden">
+
+    <header>
+      <div class="header-inner">
+        <span class="logo">⬡ Browser AR Runtime</span>
+        <nav class="tabs">
+          <button class="tab-btn" id="tab-image" onclick="App.switchTab('image')">
+            🖼 Image Tracking
+          </button>
+          <button class="tab-btn" id="tab-face" onclick="App.switchTab('face')">
+            👤 Face Filters
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- IMAGE AR PANEL (Tab 1, default) -->
+    <section id="panel-image" class="panel hidden">
+      <div class="ar-viewport" id="mindar-container">
+        <!-- A-Frame scene injected by armanager.js -->
+
+        <!-- Target slider — centered over the AR viewport -->
+        <div id="target-slider" class="target-slider">
+          <div class="slider-card" id="slider-card">
+
+            <!-- Label badge -->
+            <div class="slider-label" id="slider-label">Should Detect</div>
+
+            <!-- Target image -->
+            <img class="slider-img" id="slider-img" src="" alt="AR target" />
+
+            <!-- "Not Antoni Gaudí" overlay (hidden unless not-detectable) -->
+            <div class="not-gaudi-overlay hidden" id="not-gaudi-overlay">
+              <span>Not Antoni Gaudí</span>
+            </div>
+
+            <!-- Circular countdown timer -->
+            <div class="slider-timer" id="slider-timer">
+              <svg viewBox="0 0 36 36" class="timer-svg">
+                <circle class="timer-track" cx="18" cy="18" r="15" />
+                <circle class="timer-fill" id="timer-fill" cx="18" cy="18" r="15"
+                  stroke-dasharray="94.25 94.25"
+                  stroke-dashoffset="0" />
+              </svg>
+              <span id="timer-count">15</span>
+            </div>
+
+          </div>
+
+          <!-- Dot indicators -->
+          <div class="slider-dots" id="slider-dots"></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <span class="status-dot" id="image-status-dot"></span>
+        <span id="image-status-text">Waiting for camera…</span>
+      </div>
+    </section>
+
+    <!-- FACE AR PANEL (Tab 2) -->
+    <section id="panel-face" class="panel hidden">
+      <div class="ar-viewport">
+        <canvas id="jeeFaceFilterCanvas" class="ar-canvas"></canvas>
+        <canvas id="threeCanvas" class="ar-canvas overlay"></canvas>
+        <div id="face-hint" class="hint-overlay">
+          <p>Point your camera at your face</p>
+        </div>
+      </div>
+
+      <div class="controls">
+        <label for="effect-select">Effect</label>
+        <select id="effect-select" onchange="App.onEffectChange(this.value)">
+          <option value="hat">🎩 Black Leather Hat</option>
+          <option value="sunglasses">🕶 Sunglasses</option>
+        </select>
+        <span class="status-dot" id="face-status-dot"></span>
+        <span id="face-status-text">Waiting for camera…</span>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="js/armanager.js"></script>
+  <script src="js/face-ar.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+</html>

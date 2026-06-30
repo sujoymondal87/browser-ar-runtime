@@ -1,0 +1,11 @@
+{
+  "name": "browser-ar-runtime",
+  "version": "1.0.0",
+  "description": "Browser-native WebAR — Jeeliz face filters + MindAR image tracking",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "engines": {
+    "node": "22.11.0"
+  }
+}
