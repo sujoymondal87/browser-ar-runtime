@@ -81,16 +81,13 @@ const FaceAR = (() => {
 
   // ── Jeeliz ready callback ──
   function _onReady(errCode, spec) {
-    console.log('[FaceAR] _onReady called, errCode:', errCode, 'spec:', spec);
     if (errCode) {
       console.error('[FaceAR] Jeeliz error:', errCode);
       _setStatus('red', 'Jeeliz error: ' + errCode);
       return;
     }
 
-    console.log('[FaceAR] calling JeelizThreeHelper.init');
     const threeStuffs = JeelizThreeHelper.init(spec, null);
-    console.log('[FaceAR] JeelizThreeHelper.init returned:', threeStuffs);
 
     _threeScene  = threeStuffs.scene;
     _threeCamera = new THREE.PerspectiveCamera(40, spec.canvasElement.width / spec.canvasElement.height, 0.01, 100);
@@ -100,7 +97,6 @@ const FaceAR = (() => {
     dirLight.position.set(0, 1, 2);
     _threeScene.add(ambient, dirLight);
 
-    console.log('[FaceAR] calling _loadEffect, cache keys:', Object.keys(_modelCache));
     _loadEffect(_currentEffect);
 
     if (_pendingEffect) {
@@ -114,17 +110,8 @@ const FaceAR = (() => {
   }
 
   // ── Per-frame tracking callback ──
-  let _dbgCount = 0;
   function _onTrack(detectState) {
-    console.log('[FaceAR] _onTrack fired, detected:', detectState.detected);
     const detected = detectState.detected > 0.5;
-
-    // Log every state change + first 3 detected frames
-    if (detected !== _faceDetected || (_dbgCount < 3 && detected)) {
-      console.log('[FaceAR] detected:', detected, 'detectState:', JSON.stringify(detectState));
-      console.log('[FaceAR] _currentMesh:', !!_currentMesh, '_threeScene children:', _threeScene ? _threeScene.children.length : 'null');
-      if (detected) _dbgCount++;
-    }
 
     if (detected !== _faceDetected) {
       _faceDetected = detected;
@@ -136,7 +123,6 @@ const FaceAR = (() => {
       _currentMesh.visible = detected;
       if (detected) {
         const s = detectState.s;
-        console.log('[FaceAR] positioning mesh s:', s, 'pos:', detectState.x, detectState.y, 'z:-1 mesh.visible:', _currentMesh.visible);
         _currentMesh.position.set(
           detectState.x + _getXOffset(_currentEffect),
           detectState.y + s * _getYOffset(_currentEffect),
@@ -149,8 +135,6 @@ const FaceAR = (() => {
           detectState.rz || 0
         );
       }
-    } else {
-      if (detected) console.warn('[FaceAR] face detected but _currentMesh is null');
     }
 
     // Render Three.js scene in sync with Jeeliz's own loop
@@ -166,8 +150,7 @@ const FaceAR = (() => {
   function _loadEffect(key) {
     if (_currentMesh) { _threeScene.remove(_currentMesh); _currentMesh = null; }
     const model = _modelCache[key];
-    console.log('[FaceAR] _loadEffect key:', key, 'model found:', !!model);
-    if (!model) { console.warn('[FaceAR] Not cached:', key); return; }
+    if (!model) return;
     _currentMesh = model.clone();
     _currentMesh.visible = false;
     _threeScene.add(_currentMesh);
