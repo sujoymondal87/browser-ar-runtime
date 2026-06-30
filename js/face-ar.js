@@ -32,23 +32,27 @@ const FaceAR = (() => {
     const hint = document.getElementById('face-hint');
     if (hint) hint.classList.add('hidden');
 
+    // Start camera immediately — preload models in parallel
     _preloadModels(() => {
-      JeelizResizer.size_canvas({
-        canvasId:     'jeeFaceFilterCanvas',
-        isFullScreen: false,
-        callback: (isError, videoSettings) => {
-          if (isError) { _setStatus('red', 'Camera error'); return; }
+      // If Jeeliz already ready but model wasn't cached yet, load it now
+      if (_initialized && !_currentMesh) _loadEffect(_currentEffect);
+    });
 
-          JEELIZFACEFILTER.init({
-            canvasId:         'jeeFaceFilterCanvas',
-            NNCPath:          'https://appstatic.jeeliz.com/faceFilter/',
-            maxFacesDetected: 1,
-            videoSettings:    { ...videoSettings, facingMode: 'user' },
-            callbackReady:    _onReady,
-            callbackTrack:    _onTrack,
-          });
-        }
-      });
+    JeelizResizer.size_canvas({
+      canvasId:     'jeeFaceFilterCanvas',
+      isFullScreen: false,
+      callback: (isError, videoSettings) => {
+        if (isError) { _setStatus('red', 'Camera error'); return; }
+
+        JEELIZFACEFILTER.init({
+          canvasId:         'jeeFaceFilterCanvas',
+          NNCPath:          'https://appstatic.jeeliz.com/faceFilter/',
+          maxFacesDetected: 1,
+          videoSettings:    { ...videoSettings, facingMode: 'user' },
+          callbackReady:    _onReady,
+          callbackTrack:    _onTrack,
+        });
+      }
     });
   }
 
@@ -99,6 +103,7 @@ const FaceAR = (() => {
 
     JeelizThreeHelper.init(spec, () => {});
 
+    // Load effect now if cached, otherwise preload will call _loadEffect when done
     _loadEffect(_currentEffect);
 
     if (_pendingEffect) {

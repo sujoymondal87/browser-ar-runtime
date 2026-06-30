@@ -215,9 +215,18 @@ const ImageAR = (() => {
 
     scene.appendChild(assets);
 
-    // Plain Audio — outside A-Frame to avoid autoplay restrictions
+    // Plain Audio outside A-Frame
     _audioEl = new Audio('audio/antonio.mp3');
     _audioEl.preload = 'auto';
+
+    // Unlock audio on first user touch (mobile autoplay policy)
+    const _unlockAudio = () => {
+      _audioEl.play().then(() => _audioEl.pause()).catch(() => {});
+      document.removeEventListener('touchstart', _unlockAudio);
+      document.removeEventListener('click', _unlockAudio);
+    };
+    document.addEventListener('touchstart', _unlockAudio, { once: true });
+    document.addEventListener('click',      _unlockAudio, { once: true });
 
     // One image-target entity covers all 5 indices (all show same model)
     // We add 5 target entities, one per compiled index
