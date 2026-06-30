@@ -79,15 +79,9 @@
 
     <!-- FACE AR PANEL (Tab 2) -->
     <section id="panel-face" class="panel hidden">
-      <div class="ar-viewport">
-        <canvas id="jeeFaceFilterCanvas" class="ar-canvas"></canvas>
-        <canvas id="threeCanvas" class="ar-canvas overlay"></canvas>
-        <div id="face-hint" class="hint-overlay">
-          <p>Point your camera at your face</p>
-        </div>
-      </div>
 
-      <div class="controls">
+      <!-- Dropdown at top -->
+      <div class="face-top-bar">
         <label for="effect-select">Effect</label>
         <select id="effect-select" onchange="App.onEffectChange(this.value)">
           <option value="hat">🎩 Black Leather Hat</option>
@@ -96,6 +90,18 @@
         <span class="status-dot" id="face-status-dot"></span>
         <span id="face-status-text">Waiting for camera…</span>
       </div>
+
+      <!-- Square AR viewport, 80% of screen, centered -->
+      <div class="face-viewport-wrap">
+        <div class="ar-viewport face-square">
+          <canvas id="jeeFaceFilterCanvas" class="ar-canvas"></canvas>
+          <canvas id="threeCanvas" class="ar-canvas overlay"></canvas>
+          <div id="face-hint" class="hint-overlay">
+            <p>Point your camera at your face</p>
+          </div>
+        </div>
+      </div>
+
     </section>
 
   </div>

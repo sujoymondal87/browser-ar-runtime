@@ -30,8 +30,9 @@ const FaceAR = (() => {
 
     _preloadModels(() => {
       JeelizResizer.size_canvas({
-        canvasId: 'jeeFaceFilterCanvas',
+        canvasId:     'jeeFaceFilterCanvas',
         isFullScreen: false,
+        isKeepAspectRatio: false,
         callback: (isError, videoSettings) => {
           if (isError) { _setStatus('red', 'Camera error'); return; }
 
@@ -39,7 +40,7 @@ const FaceAR = (() => {
             canvasId:         'jeeFaceFilterCanvas',
             NNCPath:          'https://appstatic.jeeliz.com/faceFilter/',
             maxFacesDetected: 1,
-            videoSettings,
+            videoSettings:    { ...videoSettings, facingMode: 'user' },
             callbackReady:    _onReady,
             callbackTrack:    _onTrack,
           });
