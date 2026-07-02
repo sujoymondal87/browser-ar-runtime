@@ -12,11 +12,16 @@ const FaceAR = (() => {
     sunglasses: 'models/SunglassesKhronos.glb',
   };
 
+  // Per-effect position (face-local) and scale — tune these
+  const EFFECT_CONFIG = {
+    hat:        { position: [0, 0.6,  0   ], scale: 1.0 },
+    sunglasses: { position: [0, 0,    0.15], scale: 1.0 },
+  };
+
   let _initialized   = false;
   let _currentEffect = 'hat';
-  let _threeScene    = null;
   let _threeCamera   = null;
-  let _currentMesh   = null;
+  let _faceObj3D     = null;   // pivot added to faceObject — Jeeliz tracks this
   let _faceDetected  = false;
   let _pendingEffect = null;
 
@@ -27,14 +32,11 @@ const FaceAR = (() => {
     if (effectKey) _currentEffect = effectKey;
     _setStatus('amber', 'Requesting camera…');
 
-    // Hide hint until Jeeliz is ready
     const hint = document.getElementById('face-hint');
     if (hint) hint.classList.add('hidden');
 
-    // Start camera immediately — preload models in parallel
     _preloadModels(() => {
-      // If Jeeliz already ready but model wasn't cached yet, load it now
-      if (_initialized && !_currentMesh) _loadEffect(_currentEffect);
+      if (_initialized && _faceObj3D && !_faceObj3D.children.length) _loadEffect(_currentEffect);
     });
 
     JeelizResizer.size_canvas({
@@ -88,14 +90,16 @@ const FaceAR = (() => {
     }
 
     const threeStuffs = JeelizThreeHelper.init(spec, null);
-
-    _threeScene  = threeStuffs.scene;
-    _threeCamera = new THREE.PerspectiveCamera(40, spec.canvasElement.width / spec.canvasElement.height, 0.01, 100);
+    _threeCamera = JeelizThreeHelper.create_camera();
 
     const ambient  = new THREE.AmbientLight(0xffffff, 0.8);
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
     dirLight.position.set(0, 1, 2);
-    _threeScene.add(ambient, dirLight);
+    threeStuffs.scene.add(ambient, dirLight);
+
+    // Pivot attached to faceObject — Jeeliz moves faceObject to track the face
+    _faceObj3D = new THREE.Object3D();
+    threeStuffs.faceObject.add(_faceObj3D);
 
     _loadEffect(_currentEffect);
 
@@ -104,7 +108,6 @@ const FaceAR = (() => {
       _pendingEffect = null;
     }
 
-    // No separate rAF loop — render is called from _onTrack (Jeeliz's own loop)
     _initialized = true;
     _setStatus('green', 'Face AR ready');
   }
@@ -117,49 +120,35 @@ const FaceAR = (() => {
       _faceDetected = detected;
       const hint = document.getElementById('face-hint');
       if (hint) hint.classList.toggle('hidden', detected);
+      if (_faceObj3D) _faceObj3D.visible = detected;
     }
 
-    if (_currentMesh) {
-      _currentMesh.visible = detected;
-      if (detected) {
-        const s = detectState.s;
-        _currentMesh.position.set(
-          detectState.x + _getXOffset(_currentEffect),
-          detectState.y + s * _getYOffset(_currentEffect),
-          -1
-        );
-        _currentMesh.scale.setScalar(s * _getScale(_currentEffect));
-        _currentMesh.rotation.set(
-          detectState.rx || 0,
-          detectState.ry || 0,
-          detectState.rz || 0
-        );
-      }
-    }
-
-    // Render Three.js scene in sync with Jeeliz's own loop
     if (_initialized && _threeCamera) {
       JeelizThreeHelper.render(detectState, _threeCamera);
     }
   }
 
-  function _getXOffset(effect) { return effect === 'hat' ? 0.08 : 0.065; }
-  function _getYOffset(effect) { return effect === 'hat' ? 1.35 : 0.53;  }
-  function _getScale(effect)   { return effect === 'hat' ? 1.0  : 6.5;   }
-
+  // ── Load effect into the face pivot ──
   function _loadEffect(key) {
-    if (_currentMesh) { _threeScene.remove(_currentMesh); _currentMesh = null; }
+    if (!_faceObj3D) return;
+
+    // Clear previous model
+    while (_faceObj3D.children.length) _faceObj3D.remove(_faceObj3D.children[0]);
+
     const model = _modelCache[key];
     if (!model) return;
-    _currentMesh = model.clone();
-    _currentMesh.visible = false;
-    _threeScene.add(_currentMesh);
+
+    const cfg   = EFFECT_CONFIG[key];
+    const mesh  = model.clone();
+    mesh.position.set(...cfg.position);
+    mesh.scale.setScalar(cfg.scale);
+    _faceObj3D.add(mesh);
     _currentEffect = key;
   }
 
   // ── Public: switch effect ──
   function switchEffect(key) {
-    if (key === _currentEffect && _currentMesh) return;
+    if (key === _currentEffect && _faceObj3D && _faceObj3D.children.length) return;
     if (!_initialized) { _pendingEffect = key; return; }
     _loadEffect(key);
   }
@@ -168,10 +157,9 @@ const FaceAR = (() => {
   function destroy() {
     if (!_initialized) return;
     try { JEELIZFACEFILTER.destroy(); } catch (e) {}
-    _initialized  = false;
-    _currentMesh  = null;
-    _threeScene   = null;
-    _threeCamera  = null;
+    _initialized = false;
+    _faceObj3D   = null;
+    _threeCamera = null;
   }
 
   // ── Status ──
