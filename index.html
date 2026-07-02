@@ -88,6 +88,12 @@
           <option value="hat">🎩 Black Leather Hat</option>
           <option value="sunglasses">🕶 Sunglasses</option>
         </select>
+        <label for="effect2d-select">2D Effect</label>
+        <select id="effect2d-select" onchange="App.on2DEffectChange(this.value)">
+          <option value="none">— None —</option>
+          <option value="snow">❄ Snow</option>
+          <option value="sparkle">✨ Sparkle</option>
+        </select>
         <span class="status-dot" id="face-status-dot"></span>
         <span id="face-status-text">Waiting for camera…</span>
       </div>
@@ -97,6 +103,7 @@
         <div class="ar-viewport face-square">
           <canvas id="jeeFaceFilterCanvas" class="ar-canvas"></canvas>
           <canvas id="threeCanvas" class="ar-canvas overlay" style="display:none"></canvas>
+          <canvas id="overlay2DCanvas" class="ar-canvas overlay"></canvas>
           <div id="face-hint" class="hint-overlay">
             <p>Point your camera at your face</p>
           </div>

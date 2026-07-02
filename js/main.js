@@ -46,6 +46,10 @@ const App = (() => {
     FaceAR.switchEffect(value);
   }
 
+  function on2DEffectChange(value) {
+    FaceAR.switch2DEffect(value);
+  }
+
   // ── Dynamically load Jeeliz scripts (only for Face tab) ──
   function _loadJeelizScripts() {
     return new Promise((resolve) => {
@@ -108,7 +112,7 @@ const App = (() => {
     }
   }
 
-  return { boot, switchTab, onEffectChange };
+  return { boot, switchTab, onEffectChange, on2DEffectChange };
 
 })();
 
