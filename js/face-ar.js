@@ -39,6 +39,7 @@ const FaceAR = (() => {
   let _sparkleImage    = null;
   let _flakes          = [];
   let _sparkles        = [];
+  let _rafId2D         = null;
 
   // ── Public: init (called after Jeeliz scripts are loaded) ──
   function init(effectKey) {
@@ -107,6 +108,7 @@ const FaceAR = (() => {
 
     const si = new Image();
     si.onload = () => { _sparkleImage = si; };
+    si.onerror = () => { console.warn('[FaceAR] sparkle image failed to load'); };
     si.src = SPARKLE_B64;
   }
 
@@ -157,7 +159,6 @@ const FaceAR = (() => {
       JeelizThreeHelper.render(detectState, _threeCamera);
     }
 
-    _draw2DEffect();
   }
 
   // ── 2D overlay: snow + sparkle (ported from production) ──
@@ -225,7 +226,7 @@ const FaceAR = (() => {
       var anotherCanvas = _getContext2D(anotherCanvasWidth, anotherCanvasHeight);
       var g = [2, 2, 2, 0, 0, 0, -2, -2, -2];
       var sampling, newClampedArray, flake, i, u;
-      var l = Math.max(1200, Math.floor(2400 / height * height));
+      var l = Math.floor(Math.max(1200, Math.floor(2400 / height * height)) * 0.8);
       var maxCorrespondenceHeight = Math.max(6, Math.floor(12 / height * height));
       var m = 1;
 
@@ -299,10 +300,10 @@ const FaceAR = (() => {
         maxCorrespondenceHeight++;
         var dx = Math.floor(anotherCanvasWidth  * Math.random());
         var dy = Math.floor(anotherCanvasHeight * Math.random());
-        if (Math.abs(sampling[dx + dy * anotherCanvasWidth]) > 32) {
+        if (Math.abs(sampling[dx + dy * anotherCanvasWidth]) > 8) {
           _sparkles.push({ x: dx, y: dy, isBig: Math.random() < .05 });
         }
-      } while (_sparkles.length < 32 && maxCorrespondenceHeight < 8);
+      } while (_sparkles.length < 32 && maxCorrespondenceHeight < 64);
 
       for (i = 0; i < _sparkles.length; i++) {
         sparkle = _sparkles[i];
@@ -312,7 +313,7 @@ const FaceAR = (() => {
         } else {
           l = newClampedArray.data[(sparkle.x + sparkle.y * anotherCanvasWidth) * 4] + (Math.random() - .5) * 16;
         }
-        if (l < 4 || Math.abs(sampling[sparkle.x + sparkle.y * anotherCanvasWidth]) < 32) {
+        if (l < 4 || Math.abs(sampling[sparkle.x + sparkle.y * anotherCanvasWidth]) < 8) {
           (function(s) { setTimeout(function() { var j = _sparkles.indexOf(s); if (j !== -1) _sparkles.splice(j, 1); }, 2000); })(sparkle);
         } else {
           l *= height / 150000;
@@ -354,18 +355,35 @@ const FaceAR = (() => {
     _loadEffect(key);
   }
 
+  // ── 2D RAF loop (independent of Jeeliz so detection is never blocked) ──
+  function _start2DRAF() {
+    if (_rafId2D) return;
+    function loop() {
+      _draw2DEffect();
+      _rafId2D = requestAnimationFrame(loop);
+    }
+    _rafId2D = requestAnimationFrame(loop);
+  }
+
+  function _stop2DRAF() {
+    if (_rafId2D) { cancelAnimationFrame(_rafId2D); _rafId2D = null; }
+    if (_overlayCtx) _overlayCtx.clearRect(0, 0, _overlayCanvas.width, _overlayCanvas.height);
+  }
+
   // ── Public: switch 2D effect ──
   function switch2DEffect(key) {
     _current2DEffect = key;
     _flakes   = [];
     _sparkles = [];
-    if (_overlayCtx) _overlayCtx.clearRect(0, 0, _overlayCanvas.width, _overlayCanvas.height);
+    if (key === 'none') _stop2DRAF();
+    else _start2DRAF();
   }
 
   // ── Public: destroy ──
   function destroy() {
     if (!_initialized) return;
     try { JEELIZFACEFILTER.destroy(); } catch (e) {}
+    _stop2DRAF();
     _initialized = false;
     _faceObj3D   = null;
     _threeCamera = null;
