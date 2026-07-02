@@ -6,15 +6,26 @@ A browser-native augmented reality engine with two modes in one repo — real-ti
 
 ---
 
-## Why This Exists
+## Demo Video
 
-Cultural institution apps need AR that works without an app store. A visitor points their phone at an exhibit image and a 3D overlay appears — no QR code, no download, no WebXR device requirement. The same runtime also powers face filter experiences in the browser. This repo isolates both modes in standalone, runnable form, distilled from a production system serving 30+ cultural institution apps across Spain, France, and Belgium.
+<!-- Replace VIDEO_CDN_ID with the GitHub CDN asset ID once uploaded -->
+<video src="https://github.com/user-attachments/assets/6e525a4f-cb34-46c5-9db1-82581bda91d6" autoplay loop muted playsinline width="100%"></video>
+
+*Browser AR Runtime — face filter with real-time snow accumulation on 3D geometry, and image tracking AR tour*
+
+> If the video doesn't autoplay, click to play or view it directly on GitHub.
 
 ---
 
 ## Architecture
 
 ![Architecture](docs/architecture.png)
+
+---
+
+## Why This Exists
+
+Cultural institution apps need AR that works without an app store. A visitor points their phone at an exhibit image and a 3D overlay appears — no QR code, no download, no WebXR device requirement. The same runtime also powers face filter experiences in the browser. This repo isolates both modes in standalone, runnable form, distilled from a production system serving 30+ cultural institution apps across Spain, France, and Belgium.
 
 ---
 
@@ -39,9 +50,9 @@ Real-time face detection and 3D model overlay via webcam. No server involved —
 - Three.js renders a GLB model anchored to the detected face on a transparent overlay canvas
 - Two effects selectable via dropdown: **Black Leather Hat** and **Sunglasses**
 - Both GLBs are fetched and cached in memory on page load — effect switching is instant, no re-download
-- Per-effect Y-offset and scale tuning so hat sits on the head and sunglasses align to the eyes
+- Per-effect position, rotation, and scale tuning so hat sits on the head and sunglasses align to the eyes
 - **Face detection status dot** — amber while camera initialises, red when tracking is active but no face found, green when a face is actively detected
-- **2D Snow effect** — a Canvas 2D overlay with edge-detection-based accumulation; selectable via dropdown alongside the 3D filter
+- **2D Snow effect** — snowflakes fall from the top of the frame and physically accumulate on detected edges (hat rim, hair boundary, face outline). Move your head and the piled snow drops — it reacts to geometry changes in real time, not just the camera feed
 - "Point your camera at your face" hint shown until face is detected, hidden once tracking begins
 
 **The 7 targets:**
@@ -66,6 +77,7 @@ The two non-targets are deliberate. They demonstrate that the system performs **
 |---|---|
 | Face detection | Jeeliz FaceFilter (WebGL neural net) |
 | 3D rendering — Face AR | Three.js r112 + GLTFLoader |
+| 2D overlay effects | Canvas 2D API |
 | Image tracking | MindAR 1.2.3 |
 | AR scene — Image AR | A-Frame 1.4.2 |
 | 3D models | GLB (fetched on load, cached in memory) |
@@ -93,10 +105,10 @@ For image tracking, use a mobile device or grant camera permission on desktop. P
 
 ## How Tab Switching Works
 
-Switching tabs triggers a page reload with a /face`:
+Switching tabs triggers a page reload:
 
 ```
-                    → Image AR (default)
+/                   → Image AR (default)
 /face               → Face AR
 ```
 
@@ -109,7 +121,7 @@ This is intentional. Jeeliz and MindAR both claim the WebGL context and the came
 **Why Jeeliz instead of MediaPipe or TensorFlow.js for face tracking?**
 Jeeliz FaceFilter is a single self-contained WebGL neural net with no dependency graph. It runs entirely on the GPU, requires no WASM, and has a stable API. At the scale of this demo — single face, position and rotation only — it outperforms heavier frameworks on mid-range mobile hardware.
 
-**Why Two separate canvas elements for Face AR?**
+**Why two separate canvas elements for Face AR?**
 Jeeliz owns one canvas for the video feed and neural net computation. Three.js owns a second canvas with `alpha: true` stacked on top via CSS. Sharing the WebGL context between Jeeliz and newer Three.js versions causes rendering bugs. Two canvases eliminates the conflict entirely.
 
 **Why GLBs fetched on load rather than bundled?**
@@ -124,14 +136,14 @@ Image tracking requires a physical camera pointed at a physical image. On deskto
 **Why two non-targets in the slider?**
 To demonstrate the architecture honestly. The system uses compiled image feature descriptors — it matches against a specific registered set, not a category. Including similar-looking images that deliberately fail to trigger AR shows exactly where the boundary is.
 
-**Why 2D effects run on an independent requestAnimationFrame loop rather than inside Jeeliz's render callback?**
-The snow effect copies the WebGL canvas, runs a `getImageData` call, and executes an O(n²) convolution every frame. Running that synchronously inside Jeeliz's `_onTrack` callback blocks the JS thread that the neural net runs on — measurably slowing face detection. A separate RAF loop fully decouples 2D rendering from Jeeliz. Face detection runs at full speed regardless of which 2D effect is active.
-
 **Why copy the Jeeliz WebGL canvas to a 2D canvas before sampling pixels?**
-WebGL canvas pixels are not reliably readable via `getImageData` — the buffer is controlled by the GPU and may return all zeros depending on browser and driver. Copying the WebGL canvas to an intermediate 2D canvas first makes the pixels CPU-readable. The snow edge detection depends on this step; sampling the WebGL canvas directly produced zero values and the effect did nothing.
+WebGL canvas pixels are not reliably readable via `getImageData` — the buffer is GPU-controlled and returns all zeros in most browsers regardless of what's rendered. Copying the WebGL canvas to an intermediate 2D canvas first makes the pixels CPU-readable. The snow edge detection depends entirely on this step; sampling the WebGL canvas directly produced zero values and the effect did nothing.
 
 **Why use horizontal edge detection for snow accumulation rather than depth or segmentation?**
 The only reliable signal available at this layer is pixel brightness across the composited frame — including the rendered 3D hat. A horizontal kernel `[2,2,2,0,0,0,-2,-2,-2]` finds bright-to-dark transitions: hat rims, hair boundaries, face edges. Snowflakes slow and pile on those detected edges. When the head moves, the edges shift — flakes that were resting on the hat rim lose their anchor and fall. This produces physically plausible snow accumulation behaviour without a depth buffer, segmentation model, or physics engine. It's edge detection repurposed as a collision surface.
+
+**Why run 2D effects on an independent requestAnimationFrame loop rather than inside Jeeliz's render callback?**
+The snow effect copies the WebGL canvas, runs a `getImageData` call, and executes an O(n²) convolution every frame. Running that synchronously inside Jeeliz's `_onTrack` callback blocks the JS thread the neural net runs on — measurably slowing face detection. A separate RAF loop fully decouples 2D rendering from Jeeliz. Face detection runs at full speed regardless of which 2D effect is active.
 
 ---
 
@@ -185,7 +197,7 @@ The AR system this repo is distilled from is deployed inside a no-code app platf
 - MindAR requires `Cross-Origin-Opener-Policy: same-origin` + `Cross-Origin-Embedder-Policy: require-corp` — missing either header produces a `SharedArrayBuffer is not defined` error with no useful stack trace
 - Jeeliz and Three.js r112 share the WebGL context without conflict; r125+ breaks — pin the Three.js version
 - Camera stream on Android Chrome is not reliably released by `JEELIZFACEFILTER.destroy()` — always reload the page rather than attempting in-page teardown
-- WebGL canvas pixels are not reliably readable via `getImageData` directly — copy the WebGL canvas to an intermediate 2D canvas first before sampling. Sampling the WebGL canvas directly returns all zeros in most browsers regardless of what's rendered.
+- WebGL canvas pixels are not reliably readable via `getImageData` directly — copy the WebGL canvas to an intermediate 2D canvas first before sampling. Sampling the WebGL canvas directly returns all zeros in most browsers regardless of what's rendered
 
 ---
 
@@ -195,7 +207,8 @@ The AR system this repo is distilled from is deployed inside a no-code app platf
 - The two non-targets in this demo fail silently — the user sees no overlay. What feedback mechanism would you add to make the "not registered" state explicit in a real museum deployment?
 - The page-reload tab switch is a pragmatic solution to a real browser bug. At what point would you invest in a proper in-page teardown and what would that look like?
 - Face AR and Image AR share a loading screen but nothing else. What would a unified AR session manager look like if both modes needed to run simultaneously?
-  
+- The snow effect uses edge detection as a collision surface — no physics engine, no depth buffer. Where does this approach break down and what would you replace it with if you needed sub-pixel accuracy?
+
 ---
 
 ## License
