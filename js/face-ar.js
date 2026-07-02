@@ -143,9 +143,9 @@ const FaceAR = (() => {
     }
   }
 
-  function _getXOffset(effect) { return effect === 'hat' ? 0.08 : 0.08;  }
+  function _getXOffset(effect) { return effect === 'hat' ? 0.08 : 0.065; }
   function _getYOffset(effect) { return effect === 'hat' ? 1.35 : 0.53;  }
-  function _getScale(effect)   { return effect === 'hat' ? 1.0  : 6.0;   }
+  function _getScale(effect)   { return effect === 'hat' ? 1.0  : 6.5;   }
 
   function _loadEffect(key) {
     if (_currentMesh) { _threeScene.remove(_currentMesh); _currentMesh = null; }
