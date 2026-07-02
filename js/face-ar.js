@@ -14,8 +14,8 @@ const FaceAR = (() => {
 
   // Per-effect position (face-local) and scale — tune these
   const EFFECT_CONFIG = {
-    hat:        { position: [0, 0.6,  0   ], scale: 1.0 },
-    sunglasses: { position: [0, 0,    0.15], scale: 1.0 },
+    hat:        { position: [0, 1.0,  0   ], scale: 1.3 },
+    sunglasses: { position: [0, 0,    0.2 ], scale: 4.0 },
   };
 
   let _initialized   = false;
