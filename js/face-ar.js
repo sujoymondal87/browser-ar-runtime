@@ -160,28 +160,28 @@ const FaceAR = (() => {
     _draw2DEffect();
   }
 
-  // ── 2D overlay: snow + sparkle ──
+  // ── 2D overlay: snow + sparkle (ported from production) ──
   function _getContext2D(width, height) {
-    const c = document.createElement('canvas');
-    c.width  = width;
-    c.height = height;
-    const ctx = c.getContext('2d');
-    if (ctx) ctx.clearRect(0, 0, width, height);
-    return ctx;
+    var canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    var obj = canvas.getContext('2d');
+    if (obj) obj.clearRect(0, 0, width, height);
+    return obj;
   }
 
   function _clampedArray(e, A, t, i) {
-    const r = new Float32Array(t * i);
-    for (let s = e.length - 4; s >= 0; s -= 4) {
-      e[s] = e[s] * 0.3 + e[s + 1] * 0.59 + e[s + 2] * 0.11;
+    var r = new Float32Array(t * i);
+    for (var s = e.length - 4; s >= 0; s -= 4) {
+      e[s] = e[s] * .3 + e[s + 1] * .59 + e[s + 2] * .11;
     }
-    for (let o = t; o--;) {
-      for (let a = i; a--;) {
-        let n = 0;
-        for (let c = 3; c--;) {
-          for (let h = 3; h--;) {
-            const u = o + c - 1;
-            const l = a + h - 1;
+    for (var o = t; o--;) {
+      for (var a = i; a--;) {
+        var n = 0;
+        for (var c = 3; c--;) {
+          for (var h = 3; h--;) {
+            var u = o + c - 1;
+            var l = a + h - 1;
             if (l >= 0 && l < i && u >= 0 && u < t) {
               n += e[(u + l * t) * 4] * A[c + h * 3];
             }
@@ -194,135 +194,134 @@ const FaceAR = (() => {
   }
 
   function _draw2DEffect() {
-    if (!_overlayCtx || _current2DEffect === 'none') {
-      if (_overlayCtx) {
-        const c = _overlayCtx.canvas;
-        _overlayCtx.clearRect(0, 0, c.width, c.height);
-      }
-      return;
-    }
+    if (!_overlayCtx) return;
 
     const jeeCanvas = document.getElementById('jeeFaceFilterCanvas');
     if (!jeeCanvas) return;
 
-    const width  = jeeCanvas.width;
-    const height = jeeCanvas.height;
+    var width  = jeeCanvas.width;
+    var height = jeeCanvas.height;
     if (!width || !height) return;
 
     // Sync overlay size
     if (_overlayCanvas.width !== width)  _overlayCanvas.width  = width;
     if (_overlayCanvas.height !== height) _overlayCanvas.height = height;
 
-    _overlayCtx.clearRect(0, 0, width, height);
+    if (_current2DEffect === 'none') {
+      _overlayCtx.clearRect(0, 0, width, height);
+      return;
+    }
 
-    const minLength = Math.min(width, height);
-    const maxLength = Math.max(width, height);
-    const aW = Math.max(60, Math.floor(minLength / 4));
-    const aH = Math.floor(aW * maxLength / minLength);
+    // Copy Jeeliz WebGL canvas to 2D overlay (makes pixels readable for sampling)
+    _overlayCtx.clearRect(0, 0, width, height);
+    _overlayCtx.drawImage(jeeCanvas, 0, 0, width, height);
+
+    var minLength = Math.min(width, height);
+    var maxLength = Math.max(width, height);
 
     if (_current2DEffect === 'snow' && _flakeImage) {
-      const g = [2, 2, 2, 0, 0, 0, -2, -2, -2];
-      const aCtx = _getContext2D(aW, aH);
-      aCtx.drawImage(jeeCanvas, 0, 0, aW, aH);
-      const imgData = aCtx.getImageData(0, 0, aW, aH);
-      const sampling = _clampedArray(imgData.data, g, aW, aH);
+      var anotherCanvasWidth  = Math.max(60, Math.floor(minLength / 4));
+      var anotherCanvasHeight = Math.floor(anotherCanvasWidth * maxLength / minLength);
+      var anotherCanvas = _getContext2D(anotherCanvasWidth, anotherCanvasHeight);
+      var g = [2, 2, 2, 0, 0, 0, -2, -2, -2];
+      var sampling, newClampedArray, flake, i, u;
+      var l = Math.max(1200, Math.floor(2400 / height * height));
+      var maxCorrespondenceHeight = Math.max(6, Math.floor(12 / height * height));
+      var m = 1;
 
-      const m = 1;
-      const l = Math.max(1200, Math.floor(2400 / height * height));
-      let maxCorr = Math.max(6, Math.floor(12 / height * height));
+      anotherCanvas.drawImage(_overlayCtx.canvas, 0, 0, anotherCanvasWidth, anotherCanvasHeight);
+      newClampedArray = anotherCanvas.getImageData(0, 0, anotherCanvasWidth, anotherCanvasHeight);
+      if (newClampedArray && newClampedArray.data) {
+        sampling = _clampedArray(newClampedArray.data, g, anotherCanvasWidth, anotherCanvasHeight);
+      }
 
-      while (_flakes.length < l && maxCorr) {
-        maxCorr--;
-        const u = (Math.random() + 0.2) * 10 + 1;
+      while (_flakes.length < l && maxCorrespondenceHeight) {
+        maxCorrespondenceHeight--;
+        u = (Math.random() + .2) * 10 + 1;
         _flakes.push({
-          x: Math.random() * width,
-          y: 4 - u * 4,
+          x:      Math.random() * width,
+          y:      4 - u * 4,
           width:  u * 1.2 * m,
           height: u / m,
-          vx: Math.random() - 0.5,
-          vy: height * 0.003,
-          melt: 1,
+          vx:     Math.random() - .5,
+          vy:     height * .003,
+          melt:   1,
         });
       }
 
-      for (let i = 0; i < _flakes.length; i++) {
-        const flake = _flakes[i];
-        const sx = Math.floor(flake.x * aW / width);
-        const sy = Math.floor(flake.y);
-        const inBounds = sy >= 0 && sy < aH && sx >= 0 && sx < aW;
-        const edgeVal  = inBounds ? sampling[sx + sy * aW] : 0;
-
-        if (flake.y < aH / 16 || flake.y > aH - aH / 16 || edgeVal < 204) {
-          flake.vx *= 0.997;
-          flake.vy *= 0.997;
+      for (i = 0; i < _flakes.length; i++) {
+        flake = _flakes[i];
+        if (flake.y < anotherCanvasHeight / 16 || flake.y > anotherCanvasHeight - anotherCanvasHeight / 16 || sampling[Math.floor(flake.x) + Math.floor(flake.y) * anotherCanvasWidth] < 204) {
+          flake.vx *= .997;
+          flake.vy *= .997;
           flake.x  += flake.vx;
           flake.y  += flake.vy;
           if (flake.melt < 1) flake.melt += 1 / 16;
           else flake.melt = 1;
-          if (flake.x > width + flake.width)  flake.x -= width + flake.width;
-          if (flake.x < -flake.width)          flake.x += width + flake.width;
-          if (flake.y > aH + flake.height) { _flakes.splice(i--, 1); continue; }
+          if (flake.x > width + flake.width) flake.x -= width + flake.width;
+          if (flake.x < -flake.width)         flake.x += width + flake.width;
+          if (flake.y > anotherCanvasHeight + flake.height) { _flakes.splice(i++, 1); }
         } else {
           if (flake.melt > 0) {
             flake.melt -= 1 / 128;
-            flake.vy = flake.height * 0.3;
+            flake.vy = flake.height * .3;
           } else {
-            _flakes.splice(i--, 1); continue;
+            _flakes.splice(i++, 1);
           }
         }
-
         _overlayCtx.save();
         _overlayCtx.globalAlpha = Math.min(1, flake.melt * 4);
-        _overlayCtx.drawImage(
-          _flakeImage,
-          flake.x * width / aW - flake.width / 2,
-          flake.y * height / aH - flake.height / 2,
-          flake.width,
-          flake.height
+        _overlayCtx.drawImage(_flakeImage,
+          flake.x * width / anotherCanvasWidth  - flake.width  / 2,
+          flake.y * height / anotherCanvasHeight - flake.height / 2,
+          flake.width, flake.height
         );
         _overlayCtx.restore();
       }
     }
 
     if (_current2DEffect === 'sparkle' && _sparkleImage) {
-      const g = [1, 2, 1, 2, -12, 2, 1, 2, 1];
-      const m = width / height;
-      const aCtx = _getContext2D(aW, aH);
-      aCtx.drawImage(jeeCanvas, 0, 0, aW, aH);
-      const imgData = aCtx.getImageData(0, 0, aW, aH);
-      const sampling = _clampedArray(imgData.data, g, aW, aH);
+      var anotherCanvasWidth  = Math.max(60, Math.floor(minLength / 4));
+      var anotherCanvasHeight = Math.floor(anotherCanvasWidth * maxLength / minLength);
+      var anotherCanvas = _getContext2D(anotherCanvasWidth, anotherCanvasHeight);
+      var g = [1, 2, 1, 2, -12, 2, 1, 2, 1];
+      var sampling, newClampedArray, sparkle, i, l;
+      var maxCorrespondenceHeight = 0;
+      var m = width / height;
 
-      let maxCorr = 0;
+      anotherCanvas.drawImage(_overlayCtx.canvas, 0, 0, anotherCanvasWidth, anotherCanvasHeight);
+      newClampedArray = anotherCanvas.getImageData(0, 0, anotherCanvasWidth, anotherCanvasHeight);
+      if (newClampedArray && newClampedArray.data) {
+        sampling = _clampedArray(newClampedArray.data, g, anotherCanvasWidth, anotherCanvasHeight);
+      }
+
       do {
-        maxCorr++;
-        const dx = Math.floor(aW * Math.random());
-        const dy = Math.floor(aH * Math.random());
-        if (sampling[dx + dy * aW] > 32) {
-          _sparkles.push({ x: dx, y: dy, isBig: Math.random() < 0.05 });
+        maxCorrespondenceHeight++;
+        var dx = Math.floor(anotherCanvasWidth  * Math.random());
+        var dy = Math.floor(anotherCanvasHeight * Math.random());
+        if (sampling[dx + dy * anotherCanvasWidth] > 32) {
+          _sparkles.push({ x: dx, y: dy, isBig: Math.random() < .05 });
         }
-      } while (_sparkles.length < 32 && maxCorr < 8);
+      } while (_sparkles.length < 32 && maxCorrespondenceHeight < 8);
 
-      for (let i = 0; i < _sparkles.length; i++) {
-        const sparkle = _sparkles[i];
-        let l;
+      for (i = 0; i < _sparkles.length; i++) {
+        sparkle = _sparkles[i];
         if (sparkle.isBig) {
           sparkle.isBig = false;
           l = 512;
         } else {
-          const idx = (sparkle.x + sparkle.y * aW) * 4;
-          l = imgData.data[idx] + (Math.random() - 0.5) * 16;
+          l = newClampedArray.data[(sparkle.x + sparkle.y * anotherCanvasWidth) * 4] + (Math.random() - .5) * 16;
         }
-        if (l < 4 || sampling[sparkle.x + sparkle.y * aW] < 32) {
-          setTimeout(() => { const j = _sparkles.indexOf(sparkle); if (j !== -1) _sparkles.splice(j, 1); }, 2000);
+        if (l < 4 || sampling[sparkle.x + sparkle.y * anotherCanvasWidth] < 32) {
+          (function(s) { setTimeout(function() { var j = _sparkles.indexOf(s); if (j !== -1) _sparkles.splice(j, 1); }, 2000); })(sparkle);
         } else {
           l *= height / 150000;
-          const sW = _sparkleImage.width  * l / m;
-          const sH = _sparkleImage.height * l / m;
-          _overlayCtx.drawImage(
-            _sparkleImage,
-            sparkle.x * width / aW - sW / 2,
-            sparkle.y * height / aH - sH / 2,
-            sW, sH
+          var sparkleImageWidth  = _sparkleImage.width  * l / m;
+          var sparkleImageHeight = _sparkleImage.height * l / m;
+          _overlayCtx.drawImage(_sparkleImage,
+            sparkle.x * width  / anotherCanvasWidth  - sparkleImageWidth  / 2,
+            sparkle.y * height / anotherCanvasHeight - sparkleImageHeight / 2,
+            sparkleImageWidth, sparkleImageHeight
           );
         }
       }
