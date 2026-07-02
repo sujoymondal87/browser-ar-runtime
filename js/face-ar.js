@@ -14,8 +14,8 @@ const FaceAR = (() => {
 
   // Per-effect position (face-local) and scale — tune these
   const EFFECT_CONFIG = {
-    hat:        { position: [0, 1.0,  0   ], scale: 1.2 },
-    sunglasses: { position: [0, 0,    0.2 ], scale: 8.0 },
+    hat:        { position: [0, 1.0, 0  ], rotation: [0, 0, 0   ], scale: 1.5 },
+    sunglasses: { position: [0, 0.1, 0.2], rotation: [0, 0, 0.1 ], scale: 7.5 },
   };
 
   let _initialized   = false;
@@ -141,6 +141,7 @@ const FaceAR = (() => {
     const cfg   = EFFECT_CONFIG[key];
     const mesh  = model.clone();
     mesh.position.set(...cfg.position);
+    mesh.rotation.set(...cfg.rotation);
     mesh.scale.setScalar(cfg.scale);
     _faceObj3D.add(mesh);
     _currentEffect = key;
