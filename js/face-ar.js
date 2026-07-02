@@ -244,7 +244,7 @@ const FaceAR = (() => {
           width:  u * 1.2 * m,
           height: u / m,
           vx:     Math.random() - .5,
-          vy:     height * .003,
+          vy:     height * .001,
           melt:   1,
         });
       }
@@ -299,7 +299,7 @@ const FaceAR = (() => {
         maxCorrespondenceHeight++;
         var dx = Math.floor(anotherCanvasWidth  * Math.random());
         var dy = Math.floor(anotherCanvasHeight * Math.random());
-        if (sampling[dx + dy * anotherCanvasWidth] > 32) {
+        if (Math.abs(sampling[dx + dy * anotherCanvasWidth]) > 32) {
           _sparkles.push({ x: dx, y: dy, isBig: Math.random() < .05 });
         }
       } while (_sparkles.length < 32 && maxCorrespondenceHeight < 8);
@@ -312,7 +312,7 @@ const FaceAR = (() => {
         } else {
           l = newClampedArray.data[(sparkle.x + sparkle.y * anotherCanvasWidth) * 4] + (Math.random() - .5) * 16;
         }
-        if (l < 4 || sampling[sparkle.x + sparkle.y * anotherCanvasWidth] < 32) {
+        if (l < 4 || Math.abs(sampling[sparkle.x + sparkle.y * anotherCanvasWidth]) < 32) {
           (function(s) { setTimeout(function() { var j = _sparkles.indexOf(s); if (j !== -1) _sparkles.splice(j, 1); }, 2000); })(sparkle);
         } else {
           l *= height / 150000;
