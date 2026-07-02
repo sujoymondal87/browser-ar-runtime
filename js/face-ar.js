@@ -109,7 +109,7 @@ const FaceAR = (() => {
     const si = new Image();
     si.onload = () => { _sparkleImage = si; };
     si.onerror = () => { console.warn('[FaceAR] sparkle image failed to load'); };
-    si.src = SPARKLE_B64;
+    si.src = 'models/sparkle.png';
   }
 
   // ── Jeeliz ready callback ──
