@@ -40,6 +40,8 @@ Real-time face detection and 3D model overlay via webcam. No server involved —
 - Two effects selectable via dropdown: **Black Leather Hat** and **Sunglasses**
 - Both GLBs are fetched and cached in memory on page load — effect switching is instant, no re-download
 - Per-effect Y-offset and scale tuning so hat sits on the head and sunglasses align to the eyes
+- **Face detection status dot** — amber while camera initialises, red when tracking is active but no face found, green when a face is actively detected
+- **2D Snow effect** — a Canvas 2D overlay with edge-detection-based accumulation; selectable via dropdown alongside the 3D filter
 - "Point your camera at your face" hint shown until face is detected, hidden once tracking begins
 
 **The 7 targets:**
@@ -122,6 +124,15 @@ Image tracking requires a physical camera pointed at a physical image. On deskto
 **Why two non-targets in the slider?**
 To demonstrate the architecture honestly. The system uses compiled image feature descriptors — it matches against a specific registered set, not a category. Including similar-looking images that deliberately fail to trigger AR shows exactly where the boundary is.
 
+**Why 2D effects run on an independent requestAnimationFrame loop rather than inside Jeeliz's render callback?**
+The snow effect copies the WebGL canvas, runs a `getImageData` call, and executes an O(n²) convolution every frame. Running that synchronously inside Jeeliz's `_onTrack` callback blocks the JS thread that the neural net runs on — measurably slowing face detection. A separate RAF loop fully decouples 2D rendering from Jeeliz. Face detection runs at full speed regardless of which 2D effect is active.
+
+**Why copy the Jeeliz WebGL canvas to a 2D canvas before sampling pixels?**
+WebGL canvas pixels are not reliably readable via `getImageData` — the buffer is controlled by the GPU and may return all zeros depending on browser and driver. Copying the WebGL canvas to an intermediate 2D canvas first makes the pixels CPU-readable. The snow edge detection depends on this step; sampling the WebGL canvas directly produced zero values and the effect did nothing.
+
+**Why use horizontal edge detection for snow accumulation rather than depth or segmentation?**
+The only reliable signal available at this layer is pixel brightness across the composited frame — including the rendered 3D hat. A horizontal kernel `[2,2,2,0,0,0,-2,-2,-2]` finds bright-to-dark transitions: hat rims, hair boundaries, face edges. Snowflakes slow and pile on those detected edges. When the head moves, the edges shift — flakes that were resting on the hat rim lose their anchor and fall. This produces physically plausible snow accumulation behaviour without a depth buffer, segmentation model, or physics engine. It's edge detection repurposed as a collision surface.
+
 ---
 
 ## Trade-offs
@@ -134,6 +145,7 @@ To demonstrate the architecture honestly. The system uses compiled image feature
 | Same GLB for all trackable targets | Simple asset pipeline | No per-target differentiation in the overlay |
 | Desktop browse-only for Image AR | Honest UX, no wasted permission prompt | Feature appears disabled on desktop |
 | Two canvas elements | No WebGL context conflict | Extra DOM element, slightly more CSS to manage |
+| 2D effects on independent RAF | Face detection speed unaffected by overlay cost | Two animation loops running in parallel |
 
 ---
 
@@ -173,6 +185,7 @@ The AR system this repo is distilled from is deployed inside a no-code app platf
 - MindAR requires `Cross-Origin-Opener-Policy: same-origin` + `Cross-Origin-Embedder-Policy: require-corp` — missing either header produces a `SharedArrayBuffer is not defined` error with no useful stack trace
 - Jeeliz and Three.js r112 share the WebGL context without conflict; r125+ breaks — pin the Three.js version
 - Camera stream on Android Chrome is not reliably released by `JEELIZFACEFILTER.destroy()` — always reload the page rather than attempting in-page teardown
+- WebGL canvas pixels are not reliably readable via `getImageData` directly — copy the WebGL canvas to an intermediate 2D canvas first before sampling. Sampling the WebGL canvas directly returns all zeros in most browsers regardless of what's rendered.
 
 ---
 
